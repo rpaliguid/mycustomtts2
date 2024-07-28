@@ -1,11 +1,10 @@
 import argparse
 import os
-
 import torch
 import torchaudio
-
 from api import TextToSpeech, MODELS_DIR
 from utils.audio import load_voices
+from google.colab import drive
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -42,11 +41,18 @@ if __name__ == '__main__':
                                   preset=args.preset, use_deterministic_seed=args.seed, return_deterministic_state=True, cvvp_amount=args.cvvp_amount)
         if isinstance(gen, list):
             for j, g in enumerate(gen):
-                torchaudio.save(os.path.join(args.output_path, f'{selected_voice}_{k}_{j}.wav'), g.squeeze(0).cpu(), 24000)
+                audio_file = os.path.join(args.output_path, f'{selected_voice}_{k}_{j}.wav')
+                torchaudio.save(audio_file, g.squeeze(0).cpu(), 24000)
+                drive.mount('/content/gdrive')
+                file_id = drive.upload_file(audio_file)
+                print(f"Download link: https://drive.google.com/uc?id={file_id}")
         else:
-            torchaudio.save(os.path.join(args.output_path, f'{selected_voice}_{k}.wav'), gen.squeeze(0).cpu(), 24000)
+            audio_file = os.path.join(args.output_path, f'{selected_voice}_{k}.wav')
+            torchaudio.save(audio_file, gen.squeeze(0).cpu(), 24000)
+            drive.mount('/content/gdrive')
+            file_id = drive.upload_file(audio_file)
+            print(f"Download link: https://drive.google.com/uc?id={file_id}")
 
         if args.produce_debug_state:
             os.makedirs('debug_states', exist_ok=True)
             torch.save(dbg_state, f'debug_states/do_tts_debug_{selected_voice}.pth')
-
